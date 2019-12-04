@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "/home/itsmystyle/.pyenv/versions/dlp36/bin/python",
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=100"
+    ],
+}
