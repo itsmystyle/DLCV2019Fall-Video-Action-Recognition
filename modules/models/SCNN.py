@@ -10,9 +10,9 @@ class SequentialCNN(nn.Module):
         self.backbone = nn.Sequential(*(list(backbone.children())[:-2]))
 
         # Freeze backbone
-        for child in self.backbone.children():
-            for param in child.parameters():
-                param.requires_grad = False
+        # for child in self.backbone.children():
+        #     for param in child.parameters():
+        #         param.requires_grad = False
 
         self.conv = nn.Sequential(
             nn.Conv2d(2048, 1024, 3),
