@@ -1,4 +1,5 @@
 __pycache__*
 *.zip
 hw4_data
+*.pth.tar
 jupyter_notebook
