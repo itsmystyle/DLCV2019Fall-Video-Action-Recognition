@@ -180,6 +180,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--n_workers", type=int, default=8, help="Number of worker for dataloader."
     )
+    parser.add_argument(
+        "--accumulate_gradient",
+        type=int,
+        default=1,
+        help="Accumulate gradients before updating the weight.",
+    )
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed.")
 
     args = parser.parse_args()
@@ -236,6 +242,7 @@ if __name__ == "__main__":
         metric,
         args.save_dir,
         device,
+        accumulate_gradient=args.accumulate_gradient,
     )
 
     trainer.fit(args.epochs)
