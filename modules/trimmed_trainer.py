@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 
 from dataset import TrimmedVideosDataset
 from models.SCNN import SequentialCNN
+from models.RCNN import RecurrentCNN
 from metrics import MulticlassAccuracy
 from utils import set_random_seed
 
@@ -76,7 +77,7 @@ class TrimmedTrainer:
             iters += 1
 
             frames = batch["frames"].to(self.device)
-            frames_len = batch["frames_len"].to(self.device)
+            frames_len = batch["frames_len"]
             labels = batch["labels"].to(self.device)
 
             preds = self.model(frames, frames_len)
@@ -127,7 +128,7 @@ class TrimmedTrainer:
                 val_iters += 1
 
                 frames = batch["frames"].to(self.device)
-                frames_len = batch["frames_len"].to(self.device)
+                frames_len = batch["frames_len"]
                 labels = batch["labels"].to(self.device)
 
                 preds = self.model(frames, frames_len)
@@ -244,6 +245,8 @@ if __name__ == "__main__":
     # prepare model
     if args.model == "SCNN":
         model = SequentialCNN()
+    elif args.model == "RCNN":
+        model = RecurrentCNN()
 
     # prepare optimizer
     optimizer = optim.Adam(
