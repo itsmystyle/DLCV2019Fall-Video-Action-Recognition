@@ -33,6 +33,8 @@ class TrimmedTrainer:
         self.model = model.to(device)
         self.optimizer = optimizer
 
+        print(self.model)
+
         # prepare loss
         self.criterion = criterion
 
