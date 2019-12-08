@@ -10,28 +10,26 @@ class SequentialCNN(nn.Module):
         self.backbone = nn.Sequential(*(list(backbone.children())[:-2]))
 
         # Freeze backbone
-        # for child in self.backbone.children():
-        #     for param in child.parameters():
-        #         param.requires_grad = False
+        for child in self.backbone.children():
+            for param in child.parameters():
+                param.requires_grad = False
 
         self.conv = nn.Sequential(
-            nn.Conv2d(2048, 1024, 3),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(True),
-            nn.Conv2d(1024, 512, 3),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(2048, 2048, 3),
+            nn.BatchNorm2d(2048),
+            nn.MaxPool2d(3, 2),
             nn.ReLU(True),
         )
 
         for m in self.conv:
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.xavier_normal_(m.weight)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
         self.linears = nn.Sequential(
-            nn.Linear(512 * 4 * 6, 2048),
+            nn.Linear(2048 * 2 * 3, 2048),
             nn.BatchNorm1d(2048),
             nn.ReLU(True),
             nn.Linear(2048, 512),
@@ -42,9 +40,7 @@ class SequentialCNN(nn.Module):
             nn.ReLU(True),
         )
 
-        self.classifier = nn.Sequential(
-            nn.Linear(64, 32), nn.ReLU(True), nn.Linear(32, 11), nn.LogSoftmax(dim=1),
-        )
+        self.classifier = nn.Sequential(nn.Linear(64, 11), nn.LogSoftmax(dim=1))
 
     def forward(self, frames, frames_len):
         bs, ts, c, w, h = frames.shape
