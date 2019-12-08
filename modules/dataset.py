@@ -1,5 +1,6 @@
 import argparse
 
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
@@ -21,14 +22,16 @@ class TrimmedVideosDataset(Dataset):
         rescale_factor=1,
         max_padding=24,
         test=False,
+        sorting=False,
     ):
         self.video_path = video_path
         self.video_list = getVideoList(video_label_path)
         self.len = len(self.video_list["Action_labels"])
         self.downsample_factor = downsample_factor
-        self.rescale_factor = rescale_factor
+        self.rescale_factor = 1.0 / rescale_factor
         self.max_padding = max_padding
         self.test = test
+        self.sorting = sorting
 
         self.transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize(MEAN, STD)]
@@ -42,6 +45,8 @@ class TrimmedVideosDataset(Dataset):
             self.video_path,
             self.video_list["Video_category"][index],
             self.video_list["Video_name"][index],
+            rescale_factor=self.rescale_factor,
+            downsample_factor=self.downsample_factor,
         )
 
         if not self.test:
@@ -53,6 +58,12 @@ class TrimmedVideosDataset(Dataset):
 
     def collate_fn(self, datas):
         batch = {}
+
+        if self.sorting:
+            # sort whole datas with its video length
+            frames_len = np.array([data[0].shape[0] for data in datas])
+            sorted_idx = np.argsort(frames_len)
+            datas = np.array(datas)[sorted_idx]
 
         # frames_len
         frames_len = [data[0].shape[0] for data in datas]
@@ -89,8 +100,11 @@ if __name__ == "__main__":
         "video_label_path", type=str, help="Path to video label directory."
     )
     parser.add_argument("--ds_factor", type=int, default=12, help="Down-sample factor.")
+    parser.add_argument("--rescale_factor", type=int, default=1, help="Rescale factor.")
     parser.add_argument(
-        "--rescale_factor", type=float, default=1.0, help="Rescale factor."
+        "--sorting",
+        action="store_true",
+        help="Whether to sort by video length per batch.",
     )
 
     args = parser.parse_args()
@@ -101,6 +115,7 @@ if __name__ == "__main__":
             args.video_label_path,
             downsample_factor=args.ds_factor,
             rescale_factor=args.rescale_factor,
+            sorting=args.sorting,
         )
     else:
         pass
@@ -109,7 +124,7 @@ if __name__ == "__main__":
         dataset,
         batch_size=32,
         shuffle=False,
-        num_workers=8,
+        num_workers=0,
         collate_fn=dataset.collate_fn,
     )
 
