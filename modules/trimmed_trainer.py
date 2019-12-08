@@ -180,6 +180,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_padding", type=int, default=24, help="Max padding length of frames."
     )
+    parser.add_argument("--ds_factor", type=int, default=12, help="Down-sample factor.")
+    parser.add_argument("--rescale_factor", type=int, default=1, help="Rescale factor.")
+    parser.add_argument(
+        "--sorting",
+        action="store_true",
+        help="Whether to sort by video length per batch.",
+    )
     parser.add_argument(
         "--n_workers", type=int, default=8, help="Number of worker for dataloader."
     )
@@ -201,7 +208,12 @@ if __name__ == "__main__":
     train_datapath = os.path.join(args.data_path, "video", "train")
     train_labelpath = os.path.join(args.data_path, "label", "gt_train.csv")
     train_dataset = TrimmedVideosDataset(
-        train_datapath, train_labelpath, max_padding=args.max_padding
+        train_datapath,
+        train_labelpath,
+        max_padding=args.max_padding,
+        rescale_factor=(1.0 / args.rescale_factor),
+        downsample_factor=args.ds_factor,
+        sorting=args.sorting,
     )
     train_dataloader = DataLoader(
         train_dataset,
@@ -214,7 +226,12 @@ if __name__ == "__main__":
     val_datapath = os.path.join(args.data_path, "video", "valid")
     val_labelpath = os.path.join(args.data_path, "label", "gt_valid.csv")
     val_dataset = TrimmedVideosDataset(
-        val_datapath, val_labelpath, max_padding=args.max_padding
+        val_datapath,
+        val_labelpath,
+        max_padding=args.max_padding,
+        rescale_factor=(1.0 / args.rescale_factor),
+        downsample_factor=args.ds_factor,
+        sorting=args.sorting,
     )
     val_dataloader = DataLoader(
         val_dataset,
