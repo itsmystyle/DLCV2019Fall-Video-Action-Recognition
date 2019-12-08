@@ -62,12 +62,12 @@ class TrimmedVideosDataset(Dataset):
         if self.sorting:
             # sort whole datas with its video length
             frames_len = np.array([data[0].shape[0] for data in datas])
-            sorted_idx = np.argsort(frames_len)
+            sorted_idx = np.argsort(frames_len)[::-1]
             datas = np.array(datas)[sorted_idx]
 
         # frames_len
-        frames_len = [data[0].shape[0] for data in datas]
-        batch["frames_len"] = torch.tensor(frames_len).long()
+        frames_len = [min(data[0].shape[0], self.max_padding) for data in datas]
+        batch["frames_len"] = frames_len
 
         # frames
         batch_size = len(datas)
