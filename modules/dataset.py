@@ -29,7 +29,7 @@ class TrimmedVideosDataset(Dataset):
     ):
         self.video_path = video_path
         self.video_list = getVideoList(video_label_path)
-        self.len = len(self.video_list["Action_labels"])
+        self.len = len(self.video_list["Video_name"])
         self.downsample_factor = downsample_factor
         self.rescale_factor = 1.0 / rescale_factor
         self.max_padding = max_padding
@@ -57,7 +57,7 @@ class TrimmedVideosDataset(Dataset):
         else:
             label = None
 
-        return video, int(label)
+        return video, label
 
     def collate_fn(self, datas):
         batch = {}
@@ -124,7 +124,9 @@ class FullLengthVideosDataset(Dataset):
         for category in tqdm(self.categories, total=len(self.categories)):
 
             # frames
-            frames_path = sorted(glob.glob(os.path.join(self.video_path, category, "*")))
+            frames_path = sorted(
+                glob.glob(os.path.join(self.video_path, category, "*"))
+            )
             frames = []
             for path in frames_path:
                 # frame = skimage.io.imread(path)
@@ -143,7 +145,9 @@ class FullLengthVideosDataset(Dataset):
 
             # labels
             if not self.test:
-                labels_path = os.path.join(self.video_label_path, "{}.txt".format(category))
+                labels_path = os.path.join(
+                    self.video_label_path, "{}.txt".format(category)
+                )
                 with open(labels_path, "r") as fin:
                     labels = fin.readlines()
                 labels = np.array([int(i.strip()) for i in labels])
@@ -223,14 +227,21 @@ class FullLengthVideosDataset(Dataset):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Testing Videos dataset.")
     parser.add_argument(
-        "--mode", type=str, default="trimmed", help="Which dataset to test. (trimmed or full)",
+        "--mode",
+        type=str,
+        default="trimmed",
+        help="Which dataset to test. (trimmed or full)",
     )
     parser.add_argument("video_path", type=str, help="Path to video directory.")
-    parser.add_argument("video_label_path", type=str, help="Path to video label directory.")
+    parser.add_argument(
+        "video_label_path", type=str, help="Path to video label directory."
+    )
     parser.add_argument("--ds_factor", type=int, default=12, help="Down-sample factor.")
     parser.add_argument("--rescale_factor", type=int, default=1, help="Rescale factor.")
     parser.add_argument(
-        "--sorting", action="store_true", help="Whether to sort by video length per batch.",
+        "--sorting",
+        action="store_true",
+        help="Whether to sort by video length per batch.",
     )
 
     args = parser.parse_args()
@@ -253,7 +264,11 @@ if __name__ == "__main__":
         )
 
     dataloader = DataLoader(
-        dataset, batch_size=32, shuffle=False, num_workers=0, collate_fn=dataset.collate_fn,
+        dataset,
+        batch_size=32,
+        shuffle=False,
+        num_workers=0,
+        collate_fn=dataset.collate_fn,
     )
 
     for batch in tqdm(dataloader, total=len(dataloader)):
