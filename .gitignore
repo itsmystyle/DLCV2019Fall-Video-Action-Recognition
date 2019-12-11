@@ -2,4 +2,4 @@ __pycache__*
 *.zip
 hw4_data
 models/*
-jupyter_notebook
+*.ipynb_checkpoints
