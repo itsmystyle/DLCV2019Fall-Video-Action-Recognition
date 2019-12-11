@@ -59,9 +59,7 @@ class TrimmedTrainer:
 
         for epoch in range(1, epochs + 1):
             loss, iters = self._run_one_epoch(epoch, iters)
-            val_loss, best_accuracy, val_iters = self._eval_one_epoch(
-                val_iters, best_accuracy
-            )
+            val_loss, best_accuracy, val_iters = self._eval_one_epoch(val_iters, best_accuracy)
 
     def _run_one_epoch(self, epoch, iters):
         self.model.train()
@@ -85,7 +83,7 @@ class TrimmedTrainer:
             preds = self.model(frames, frames_len)
 
             # calculate loss and update weights
-            loss = self.criterion(preds, labels)
+            loss = self.criterion(preds, labels) / self.accumulate_gradient
             if idx % self.accumulate_gradient == 0:
                 self.optimizer.zero_grad()
             loss.backward()
@@ -96,17 +94,14 @@ class TrimmedTrainer:
             self.metric.update(preds, labels)
 
             # update loss
-            batch_loss += loss.item()
+            batch_loss += loss.item() * self.accumulate_gradient
             self.writer.add_scalars(
-                "Loss",
-                {"iter_loss": loss.item(), "avg_loss": batch_loss / (idx + 1)},
-                iters,
+                "Loss", {"iter_loss": loss.item(), "avg_loss": batch_loss / (idx + 1)}, iters,
             )
 
             # update tqdm
             trange.set_postfix(
-                loss=batch_loss / (idx + 1),
-                **{self.metric.name: self.metric.print_score()}
+                loss=batch_loss / (idx + 1), **{self.metric.name: self.metric.print_score()}
             )
 
         if (idx + 1) % self.accumulate_gradient != 0:
@@ -118,9 +113,7 @@ class TrimmedTrainer:
     def _eval_one_epoch(self, val_iters, best_accuracy):
         self.model.eval()
 
-        trange = tqdm(
-            enumerate(self.val_loader), total=len(self.val_loader), desc="Valid"
-        )
+        trange = tqdm(enumerate(self.val_loader), total=len(self.val_loader), desc="Valid")
 
         self.metric.reset()
         batch_loss = 0.0
@@ -149,15 +142,20 @@ class TrimmedTrainer:
 
                 # update tqdm
                 trange.set_postfix(
-                    loss=batch_loss / (idx + 1),
-                    **{self.metric.name: self.metric.print_score()}
+                    loss=batch_loss / (idx + 1), **{self.metric.name: self.metric.print_score()}
                 )
 
             # save best acc model
             if self.metric.get_score() > best_accuracy:
                 print("Best model saved!")
-                self.save(os.path.join(self.save_dir, "model_best.pth.tar"))
                 best_accuracy = self.metric.get_score()
+                _loss = batch_loss / (idx + 1)
+                self.save(
+                    os.path.join(
+                        self.save_dir,
+                        "model_best_{:.5f}_{:.5f}.pth.tar".format(best_accuracy, _loss),
+                    )
+                )
 
         return batch_loss / (idx + 1), best_accuracy, val_iters
 
@@ -176,23 +174,15 @@ if __name__ == "__main__":
     parser.add_argument("save_dir", type=str, help="Where to save trained model.")
     parser.add_argument("--epochs", type=int, default=5, help="Epochs.")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate.")
-    parser.add_argument(
-        "--weight_decay", type=float, default=1e-6, help="Weight decay rate."
-    )
+    parser.add_argument("--weight_decay", type=float, default=1e-6, help="Weight decay rate.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
-    parser.add_argument(
-        "--max_padding", type=int, default=24, help="Max padding length of frames."
-    )
+    parser.add_argument("--max_padding", type=int, default=24, help="Max padding length of frames.")
     parser.add_argument("--ds_factor", type=int, default=12, help="Down-sample factor.")
     parser.add_argument("--rescale_factor", type=int, default=1, help="Rescale factor.")
     parser.add_argument(
-        "--sorting",
-        action="store_true",
-        help="Whether to sort by video length per batch.",
+        "--sorting", action="store_true", help="Whether to sort by video length per batch.",
     )
-    parser.add_argument(
-        "--n_workers", type=int, default=8, help="Number of worker for dataloader."
-    )
+    parser.add_argument("--n_workers", type=int, default=8, help="Number of worker for dataloader.")
     parser.add_argument(
         "--accumulate_gradient",
         type=int,
@@ -251,9 +241,7 @@ if __name__ == "__main__":
         model = RecurrentCNN()
 
     # prepare optimizer
-    optimizer = optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-    )
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     # criterion
     criterion = nn.NLLLoss()
