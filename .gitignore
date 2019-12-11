@@ -1,5 +1,6 @@
 __pycache__*
 *.zip
 hw4_data
+h4_data
 models/*
 *.ipynb_checkpoints
