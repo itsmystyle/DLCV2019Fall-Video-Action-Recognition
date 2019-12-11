@@ -208,10 +208,10 @@ class FullLengthVideosDataset(Dataset):
                     final_chunks.append((frame_chunks[i], label_chunks[i]))
                 else:
                     frame_chunk = np.concatenate(
-                        (frame_chunks[i - 1][-self.overlap :], frame_chunks[i])
+                        (frame_chunks[i - 1][-self.overlap:], frame_chunks[i])
                     )
                     label_chunk = np.concatenate(
-                        (label_chunks[i - 1][-self.overlap :], label_chunks[i])
+                        (label_chunks[i - 1][-self.overlap:], label_chunks[i])
                     )
                     final_chunks.append((frame_chunk, label_chunk))
             else:
