@@ -6,6 +6,8 @@ class SeqRecurrentCNN(nn.Module):
     def __init__(self):
         super(SeqRecurrentCNN, self).__init__()
 
+        self.hidden_dim = 1024
+
         backbone = models.resnet50(pretrained=True)
         self.backbone = nn.Sequential(*(list(backbone.children())[:-1]))
 
@@ -18,20 +20,19 @@ class SeqRecurrentCNN(nn.Module):
             nn.Linear(2048 * 2 * 4, 2048),
             nn.BatchNorm1d(2048),
             nn.ReLU(True),
-            nn.Linear(2048, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(2048, self.hidden_dim),
+            nn.BatchNorm1d(self.hidden_dim),
             nn.ReLU(True),
         )
 
-        self.rnn = nn.LSTM(512, 512, bidirectional=True, batch_first=True)
+        self.rnn = nn.LSTM(self.hidden_dim, self.hidden_dim, bidirectional=True, batch_first=True)
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 2, 256),
+            nn.Linear(self.hidden_dim * 2, 256),
             nn.ReLU(True),
             nn.Dropout(0.5),
             nn.Linear(256, 64),
             nn.ReLU(True),
-            nn.Dropout(0.5),
             nn.Linear(64, 11),
             nn.LogSoftmax(dim=1),
         )
