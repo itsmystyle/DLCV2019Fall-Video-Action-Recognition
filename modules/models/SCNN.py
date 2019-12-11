@@ -7,29 +7,29 @@ class SequentialCNN(nn.Module):
         super(SequentialCNN, self).__init__()
 
         backbone = models.resnet50(pretrained=True)
-        self.backbone = nn.Sequential(*(list(backbone.children())[:-2]))
+        self.backbone = nn.Sequential(*(list(backbone.children())[:-1]))
 
         # Freeze backbone
         for child in self.backbone.children():
             for param in child.parameters():
                 param.requires_grad = False
 
-        self.conv = nn.Sequential(
-            nn.Conv2d(2048, 2048, 3),
-            nn.BatchNorm2d(2048),
-            nn.MaxPool2d(3, 2),
-            nn.ReLU(True),
-        )
+        # self.conv = nn.Sequential(
+        #     nn.Conv2d(2048, 2048, 3),
+        #     nn.BatchNorm2d(2048),
+        #     nn.MaxPool2d(3, 2),
+        #     nn.ReLU(True),
+        # )
 
-        for m in self.conv:
-            if isinstance(m, nn.Conv2d):
-                nn.init.xavier_normal_(m.weight)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        # for m in self.conv:
+        #     if isinstance(m, nn.Conv2d):
+        #         nn.init.xavier_normal_(m.weight)
+        #     elif isinstance(m, nn.BatchNorm2d):
+        #         nn.init.constant_(m.weight, 1)
+        #         nn.init.constant_(m.bias, 0)
 
         self.linears = nn.Sequential(
-            nn.Linear(2048 * 2 * 3, 2048),
+            nn.Linear(2048 * 2 * 4, 2048),
             nn.BatchNorm1d(2048),
             nn.ReLU(True),
             nn.Linear(2048, 512),
@@ -46,7 +46,7 @@ class SequentialCNN(nn.Module):
         bs, ts, c, w, h = frames.shape
         frames = frames.view(-1, c, w, h)
         frames = self.backbone(frames)
-        frames = self.conv(frames)
+        # frames = self.conv(frames)
         frames = frames.view(bs * ts, -1)
         frames = self.linears(frames)
         frames = frames.view(bs, ts, -1)
