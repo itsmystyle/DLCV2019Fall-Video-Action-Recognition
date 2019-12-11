@@ -25,13 +25,15 @@ class RecurrentCNN(nn.Module):
             nn.ReLU(True),
         )
 
-        self.rnn = nn.GRU(512, 256, bidirectional=True, batch_first=True)
+        self.rnn = nn.LSTM(512, 512, bidirectional=True, batch_first=True)
 
         self.classifier = nn.Sequential(
-            nn.Linear(256 * 2, 256),
+            nn.Linear(512 * 2, 256),
             nn.ReLU(True),
+            nn.Dropout(0.5),
             nn.Linear(256, 64),
             nn.ReLU(True),
+            nn.Dropout(0.5),
             nn.Linear(64, 11),
             nn.LogSoftmax(dim=1),
         )
@@ -44,7 +46,7 @@ class RecurrentCNN(nn.Module):
         frames = self.linears(frames)
         frames = frames.view(bs, ts, -1)
         frames = nn.utils.rnn.pack_padded_sequence(frames, frames_len, batch_first=True)
-        frames, hn = self.rnn(frames)
+        frames, (hn, cn) = self.rnn(frames)
         frames = F.relu(torch.cat((hn[0], hn[1]), dim=1))
         frames = self.classifier(frames)
 
