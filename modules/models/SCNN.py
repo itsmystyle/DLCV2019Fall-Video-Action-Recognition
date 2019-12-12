@@ -14,20 +14,6 @@ class SequentialCNN(nn.Module):
             for param in child.parameters():
                 param.requires_grad = False
 
-        # self.conv = nn.Sequential(
-        #     nn.Conv2d(2048, 2048, 3),
-        #     nn.BatchNorm2d(2048),
-        #     nn.MaxPool2d(3, 2),
-        #     nn.ReLU(True),
-        # )
-
-        # for m in self.conv:
-        #     if isinstance(m, nn.Conv2d):
-        #         nn.init.xavier_normal_(m.weight)
-        #     elif isinstance(m, nn.BatchNorm2d):
-        #         nn.init.constant_(m.weight, 1)
-        #         nn.init.constant_(m.bias, 0)
-
         self.linears = nn.Sequential(
             nn.Linear(2048 * 2 * 4, 2048),
             nn.BatchNorm1d(2048),
@@ -46,7 +32,6 @@ class SequentialCNN(nn.Module):
         bs, ts, c, w, h = frames.shape
         frames = frames.view(-1, c, w, h)
         frames = self.backbone(frames)
-        # frames = self.conv(frames)
         frames = frames.view(bs * ts, -1)
         frames = self.linears(frames)
         frames = frames.view(bs, ts, -1)
