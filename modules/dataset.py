@@ -223,7 +223,7 @@ class FullLengthVideosDataset(Dataset):
                     label_chunk = np.concatenate(
                         (label_chunks[i - 1][-self.overlap:], label_chunks[i])
                     )
-                    category_ls = [category] * label_chunk[i].shape[0]
+                    category_ls = [category] * label_chunk.shape[0]
                     final_chunks.append((frame_chunk, label_chunk, category_ls))
             else:
                 category_ls = [category] * label_chunks[i].shape[0]
