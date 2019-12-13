@@ -12,7 +12,7 @@ from modules.models.SCNN import SequentialCNN
 from modules.models.RCNN import RecurrentCNN
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train sequential trimmed video.")
+    parser = argparse.ArgumentParser(description="Predict trimmed video.")
     parser.add_argument(
         "model", type=str, default="SCNN", help="Which model to train (SCNN or RCNN)."
     )
