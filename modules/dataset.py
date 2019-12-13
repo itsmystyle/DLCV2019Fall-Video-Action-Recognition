@@ -155,7 +155,7 @@ class FullLengthVideosDataset(Dataset):
             else:
                 labels = np.array([0] * len(frames_path))
 
-            self.datas += self.trim_frames(frames, labels)
+            self.datas += self.trim_frames(frames, labels, category)
 
     def __len__(self):
         return len(self.datas)
@@ -174,6 +174,8 @@ class FullLengthVideosDataset(Dataset):
             sorted_idx = np.argsort(lens)[::-1]
             datas = [datas[idx] for idx in sorted_idx]
 
+            batch["sorted_idx"] = np.argsort(sorted_idx)
+
         # frames_len
         frames_len = [data[0].shape[0] for data in datas]
         batch["frames_len"] = frames_len
@@ -185,7 +187,7 @@ class FullLengthVideosDataset(Dataset):
         frames[:, :, 0, :, :] = (frames[:, :, 0, :, :] - MEAN[0]) / STD[0]
         frames[:, :, 1, :, :] = (frames[:, :, 1, :, :] - MEAN[1]) / STD[1]
         frames[:, :, 2, :, :] = (frames[:, :, 2, :, :] - MEAN[2]) / STD[2]
-        for idx, (data, _) in enumerate(datas):
+        for idx, (data, _, _) in enumerate(datas):
             for step, frame in enumerate(data):
                 frames[idx, step] = self.transform(frame)
         batch["frames"] = frames.float()
@@ -193,13 +195,15 @@ class FullLengthVideosDataset(Dataset):
         if not self.test:
             # labels
             labels = np.zeros((batch_size, padding_len), dtype=np.int64)
-            for idx, (_, data) in enumerate(datas):
+            for idx, (_, data, _) in enumerate(datas):
                 labels[idx, : data.shape[0]] = data
             batch["labels"] = torch.tensor(labels).long()
+        else:
+            batch["category"] = [data[2] for data in datas]
 
         return batch
 
-    def trim_frames(self, frames, labels):
+    def trim_frames(self, frames, labels, category):
         chunk_size = frames.shape[0] // (self.length - self.overlap)
 
         frame_chunks = np.array_split(frames, chunk_size)
@@ -210,7 +214,8 @@ class FullLengthVideosDataset(Dataset):
         for i in range(chunk_size):
             if self.overlap > 0:
                 if i == 0:
-                    final_chunks.append((frame_chunks[i], label_chunks[i]))
+                    category_ls = [category] * label_chunks[i].shape[0]
+                    final_chunks.append((frame_chunks[i], label_chunks[i], category_ls))
                 else:
                     frame_chunk = np.concatenate(
                         (frame_chunks[i - 1][-self.overlap:], frame_chunks[i])
@@ -218,9 +223,11 @@ class FullLengthVideosDataset(Dataset):
                     label_chunk = np.concatenate(
                         (label_chunks[i - 1][-self.overlap:], label_chunks[i])
                     )
-                    final_chunks.append((frame_chunk, label_chunk))
+                    category_ls = [category] * label_chunk[i].shape[0]
+                    final_chunks.append((frame_chunk, label_chunk, category_ls))
             else:
-                final_chunks.append((frame_chunks[i], label_chunks[i]))
+                category_ls = [category] * label_chunks[i].shape[0]
+                final_chunks.append((frame_chunks[i], label_chunks[i], category_ls))
 
         return final_chunks
 
