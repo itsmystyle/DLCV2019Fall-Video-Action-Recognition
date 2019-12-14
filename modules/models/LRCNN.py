@@ -52,5 +52,15 @@ class SeqRecurrentCNN(nn.Module):
 
         return frames
 
-    def extract_features(self, frames):
-        pass
+    def extract_features(self, frames, frames_len):
+        bs, ts, c, w, h = frames.shape
+        frames = frames.view(-1, c, w, h)
+        frames = self.backbone(frames)
+        frames = frames.view(bs * ts, -1)
+        frames = self.linears(frames)
+        frames = frames.view(bs, ts, -1)
+        frames = nn.utils.rnn.pack_padded_sequence(frames, frames_len, batch_first=True)
+        frames, (hn, cn) = self.rnn(frames)
+        frames, _ = nn.utils.rnn.pad_packed_sequence(frames, batch_first=True)
+
+        return F.relu(frames)

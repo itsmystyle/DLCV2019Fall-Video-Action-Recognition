@@ -27,7 +27,9 @@ class RecurrentCNN(nn.Module):
             nn.ReLU(True),
         )
 
-        self.rnn = nn.LSTM(self.hidden_dim, self.hidden_dim, bidirectional=True, batch_first=True)
+        self.rnn = nn.LSTM(
+            self.hidden_dim, self.hidden_dim, bidirectional=True, batch_first=True
+        )
 
         self.classifier = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, 256),
@@ -53,5 +55,15 @@ class RecurrentCNN(nn.Module):
 
         return frames
 
-    def extract_features(self, frames):
-        pass
+    def extract_features(self, frames, frames_len):
+        bs, ts, c, w, h = frames.shape
+        frames = frames.view(-1, c, w, h)
+        frames = self.backbone(frames)
+        frames = frames.view(bs * ts, -1)
+        frames = self.linears(frames)
+        frames = frames.view(bs, ts, -1)
+        frames = nn.utils.rnn.pack_padded_sequence(frames, frames_len, batch_first=True)
+        frames, (hn, cn) = self.rnn(frames)
+        frames = F.relu(torch.cat((hn[0], hn[1]), dim=1))
+
+        return frames

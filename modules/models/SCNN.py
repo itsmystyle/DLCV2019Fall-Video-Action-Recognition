@@ -41,4 +41,12 @@ class SequentialCNN(nn.Module):
         return frames
 
     def extract_features(self, frames):
-        pass
+        bs, ts, c, w, h = frames.shape
+        frames = frames.view(-1, c, w, h)
+        frames = self.backbone(frames)
+        frames = frames.view(bs * ts, -1)
+        frames = self.linears(frames)
+        frames = frames.view(bs, ts, -1)
+        frames = frames.mean(dim=1)
+
+        return frames
