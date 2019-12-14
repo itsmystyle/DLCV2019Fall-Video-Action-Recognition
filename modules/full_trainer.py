@@ -32,7 +32,7 @@ accumulate_gradient = 8
 model = SeqRecurrentCNN()
 model.to(device)
 
-optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-5)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 criterion = nn.NLLLoss()
 metric = MulticlassAccuracy()
 writer = SummaryWriter(os.path.join(save_dir, "train_logs"))
@@ -55,7 +55,7 @@ train_loader = DataLoader(
 )
 valid_loader = DataLoader(
     valid_set,
-    batch_size=4,
+    batch_size=1,
     num_workers=32,
     shuffle=False,
     collate_fn=valid_set.collate_fn,
