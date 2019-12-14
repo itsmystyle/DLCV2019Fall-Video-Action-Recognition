@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.models as models
 
 
@@ -25,16 +26,16 @@ class SeqRecurrentCNN(nn.Module):
             nn.ReLU(True),
         )
 
-        self.rnn = nn.LSTM(self.hidden_dim, self.hidden_dim, bidirectional=True, batch_first=True)
+        self.rnn = nn.LSTM(self.hidden_dim, self.hidden_dim, batch_first=True)
 
         self.classifier = nn.Sequential(
-            nn.Linear(self.hidden_dim * 2, 256),
+            nn.Linear(self.hidden_dim, 512),
             nn.ReLU(True),
             nn.Dropout(0.5),
-            nn.Linear(256, 64),
+            nn.Linear(512, 128),
             nn.ReLU(True),
-            nn.Linear(64, 11),
-            nn.LogSoftmax(dim=1),
+            nn.Linear(128, 11),
+            nn.LogSoftmax(dim=2),
         )
 
     def forward(self, frames, frames_len):
@@ -47,7 +48,7 @@ class SeqRecurrentCNN(nn.Module):
         frames = nn.utils.rnn.pack_padded_sequence(frames, frames_len, batch_first=True)
         frames, (hn, cn) = self.rnn(frames)
         frames, _ = nn.utils.rnn.pad_packed_sequence(frames, batch_first=True)
-        frames = self.classifier(frames)
+        frames = self.classifier(F.relu(frames))
 
         return frames
 
