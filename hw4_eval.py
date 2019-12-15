@@ -48,6 +48,9 @@ if __name__ == "__main__":
                 if _g.strip() == _p.strip():
                     acc[category]["n_correct"] += 1
 
+        for k, v in acc.items():
+            print(k, str(v["n_correct"] / v["n"]))
+
         n_total = sum([v["n"] for k, v in acc.items()])
         n_correct = sum([v["n_correct"] for k, v in acc.items()])
 
