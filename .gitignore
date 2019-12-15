@@ -2,6 +2,7 @@ __pycache__*
 *.zip
 hw4_data
 h4_data
-models/*
+train_logs
+*.pth.tar
 *.ipynb_checkpoints
 output
