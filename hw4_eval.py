@@ -38,9 +38,7 @@ if __name__ == "__main__":
             if category not in acc:
                 acc[category] = {"n": 0, "n_correct": 0}
 
-            assert len(targets) == len(
-                preds
-            ), "Number of ground-truth and predicts not same!"
+            assert len(targets) == len(preds), "Number of ground-truth and predicts not same!"
 
             acc[category]["n"] = len(targets)
 
@@ -48,8 +46,12 @@ if __name__ == "__main__":
                 if _g.strip() == _p.strip():
                     acc[category]["n_correct"] += 1
 
+        _acc = []
         for k, v in acc.items():
+            _acc.append(v["n_correct"] / v["n"])
             print(k, str(v["n_correct"] / v["n"]))
+
+        print(sum(_acc) / len(_acc))
 
         n_total = sum([v["n"] for k, v in acc.items()])
         n_correct = sum([v["n_correct"] for k, v in acc.items()])
